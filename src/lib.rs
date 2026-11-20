@@ -3,6 +3,11 @@ use horizon_mod_sdk::{
     render::{self, FillShape, Point, Rect, Shape, TextShape},
 };
 
+// Distance from the bottom edge of the screen to the bottom of the text box,
+// in GUI pixels. The hotbar, hearts and XP bar fill roughly the lowest 55;
+// raise this if the text still touches them, lower it to sit closer.
+const BOTTOM: f32 = 64.0;
+
 struct CoordsDay {
     // What was drawn last, so the screen is only updated when something changes.
     last: (String, u32, u32),
@@ -55,9 +60,9 @@ impl Mod for CoordsDay {
         let box_w = self.widest + pad * 2.0;
         let box_h = lines.len() as f32 * line_h + pad * 2.0 - 1.0;
 
-        // Middle of the left edge.
-        let left = 2.0;
-        let top = ((h - box_h) / 2.0).max(0.0);
+        // Centered, just above the hotbar and its status bars.
+        let left = ((w - box_w) / 2.0).max(0.0);
+        let top = (h - box_h - BOTTOM).max(0.0);
 
         let mut shapes = Vec::new();
         // Dark see-through background (0xAARRGGBB: about 50% black).
