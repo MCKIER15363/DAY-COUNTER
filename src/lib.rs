@@ -1,87 +1,49 @@
 use horizon_mod_sdk::{
     Mod, Registration, game,
     render::{self, FillShape, Point, Rect, Shape, TextShape},
+    storage,
+    ui::{self, ButtonWidget, SliderWidget, WidgetV2 as Widget},
 };
 
-// Distance from the bottom edge of the screen to the bottom of the text box,
-// in GUI pixels. The hotbar, hearts and XP bar fill roughly the lowest 55;
-// raise this if the text still touches them, lower it to sit closer.
-const BOTTOM: f32 = 64.0;
+const SCALE_MIN: u32 = 50;
+const SCALE_MAX: u32 = 200;
+const SCALE_STEP: u32 = 5;
+
+const SHOW: u32 = 1;
+const BACKGROUND: u32 = 2;
+const COORDS: u32 = 3;
+const DAY: u32 = 4;
+const MOVE: u32 = 5;
+const RESET: u32 = 6;
+const DONE: u32 = 7;
+const S_SIZE: u32 = 20;
+const S_X: u32 = 21;
+const S_Y: u32 = 22;
+const S_OPACITY: u32 = 23;
+
+const FILE: &str = "coords_day.txt";
 
 struct CoordsDay {
-    // What was drawn last, so the screen is only updated when something changes.
+    show: bool,
+    background: bool,
+    coords: bool,
+    day: bool,
+    scale: u32,   // percent, 50 to 200
+    x: u32,       // 0 (left) to 1000 (right)
+    y: u32,       // 0 (top) to 1000 (bottom)
+    opacity: u32, // background, 0 to 100
     last: (String, u32, u32),
-    // The widest the text has been, so the background doesn't jitter.
+    drawn: bool,
     widest: f32,
+    area: (f32, f32, f32, f32, f32, f32),
 }
 
-/// The lines to show: position, then day and time of day.
-fn lines() -> Vec<String> {
-    let mut out = Vec::new();
-    if let Some(p) = game::get_player() {
-        out.push(format!("XYZ: {:.1} {:.1} {:.1}", p.x, p.y, p.z));
-    }
-    if let Some(c) = game::get_clock() {
-        // 24000 ticks per day; tick 0 is 6:00 on the first day.
-        let day = c.day_time / 24000 + 1;
-        let in_day = c.day_time % 24000;
-        let hours = (in_day / 1000 + 6) % 24;
-        let minutes = (in_day % 1000) * 60 / 1000;
-        out.push(format!("Day {day}  {hours:02}:{minutes:02}"));
-    }
-    out
+fn on_off(on: bool) -> &'static str {
+    if on { "On" } else { "Off" }
 }
 
-impl Mod for CoordsDay {
-    fn init() -> Result<(Self, Registration), String> {
-        Ok((
-            CoordsDay { last: (String::new(), 0, 0), widest: 0.0 },
-            Registration::new().on_frame(),
-        ))
-    }
-
-    fn frame(&mut self, _seconds: f32) {
-        let lines = lines();
-        let (w, h) = render::gui_size();
-        let key = (lines.join("\n"), w as u32, h as u32);
-        if key == self.last {
-            return;
-        }
-        self.last = key;
-        if lines.is_empty() {
-            render::set_hud(&[]);
-            return;
-        }
-
-        let pad = 3.0;
-        let line_h = 10.0;
-        let text_w = lines.iter().map(|l| render::text_width(l)).fold(0.0, f32::max);
-        self.widest = self.widest.max(text_w);
-        let box_w = self.widest + pad * 2.0;
-        let box_h = lines.len() as f32 * line_h + pad * 2.0 - 1.0;
-
-        // Centered, just above the hotbar and its status bars.
-        let left = ((w - box_w) / 2.0).max(0.0);
-        let top = (h - box_h - BOTTOM).max(0.0);
-
-        let mut shapes = Vec::new();
-        // Dark see-through background (0xAARRGGBB: about 50% black).
-        shapes.push(Shape::Fill(FillShape {
-            rect: Rect { x: left, y: top, w: box_w, h: box_h },
-            color: 0x80000000,
-        }));
-        for (row, line) in lines.iter().enumerate() {
-            shapes.push(Shape::Text(TextShape {
-                text: line.clone(),
-                at: Point { x: left + pad, y: top + pad + row as f32 * line_h },
-                color: 0xFFFFFF,
-                centered: false,
-                shadow: true,
-            }));
-        }
-        render::set_hud(&shapes);
-    }
-}
-
-// Registers the mod, as PH-FPS does at the end of its lib.rs.
-horizon_mod_sdk::export_mod!(CoordsDay);
+fn load_config() -> Vec<(String, String)> {
+    let Some(text) = storage::get(FILE).and_then(|v| String::from_utf8(v).ok()) else {
+        return Vec::new();
+    };
+    text.lines()
