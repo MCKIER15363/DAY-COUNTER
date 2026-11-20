@@ -1,10 +1,9 @@
-
 id = "coords_day"
 name = "Coords and Day"
-version = "0.1.0"
-description = "Shows your XYZ position and the world day in the top-left corner."
+version = "0.2.0"
+description = "Shows your XYZ position and the world day, with settings to move and style it."
 authors = ["CGRLabs"]
 api = "0.1"
 side = "client"
-capabilities = ["game-read", "render"]
+capabilities = ["game-read", "render", "storage", "ui"]
 experimental = ["render"]
