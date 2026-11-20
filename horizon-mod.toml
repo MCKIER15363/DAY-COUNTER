@@ -1,0 +1,13 @@
+id = "coords_day"
+name = "Coords and Day"
+version = "0.1.0"
+description = "Shows your XYZ position and the world day in the top-left corner."
+authors = ["CGRLabs"]
+api = "0.1"
+side = "client"
+# game-read: your position and the world clock;
+# render: draws the text on the screen.
+capabilities = ["game-read", "render"]
+experimental = ["render"]
+minecraft = "26.3"
+license = "MIT"
