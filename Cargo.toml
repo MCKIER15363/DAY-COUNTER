@@ -1,6 +1,6 @@
 [package]
 name = "coords_day"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MIT"
 publish = false
@@ -10,7 +10,7 @@ description = "Shows your XYZ position and the world day on screen."
 crate-type = ["cdylib"]
 
 [dependencies]
-horizon-mod-sdk = { git = "https://github.com/Vasysik/horizon-android", rev = "80700a6f26afe53a368032d8b28bd364f7c3e7e4" }
+horizon-mod-sdk = { git = "https://github.com/WandersTest3/Pojarush_Test3", rev = "2a0933feec3b46942e4c9317c10a668b770fe3fa" }
 
 [profile.release]
 opt-level = "s"
